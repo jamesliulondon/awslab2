@@ -1,0 +1,79 @@
+Description: AWSLAB one
+  One subnet.
+
+
+Parameters:
+  EnvironmentName:
+    Type: String
+
+  VpcCidr:
+    Default: 10.0.0.0/16
+    Type: String
+
+  VpcSubnetCidr:
+    Default: 10.0.0.0/24
+    Type: String
+
+
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Ref EnvironmentName
+
+
+  VpcIgw:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Ref EnvironmentName
+
+
+  VpcGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref VpcIgw
+      VpcId: !Ref Vpc
+
+
+  Subnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+#      AssignIpv6AddressOnCreation: true
+      AvailabilityZone: !Select [1, !GetAZs '' ]
+      CidrBlock: !Ref VpcSubnetCidr
+#      Ipv6CidrBlock: String
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Ref EnvironmentName
+      VpcId: !Ref Vpc
+
+
+  SubnetRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - Key: Name
+          Value: !Ref EnvironmentName
+
+
+  DefaultRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref VpcIgw
+      RouteTableId: !Ref SubnetRouteTable
+
+  RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref SubnetRouteTable
+      SubnetId: !Ref Subnet
