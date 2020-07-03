@@ -12,7 +12,7 @@ variable "EnvironmentName" {
 }
 
 variable "CidrBlocks" {
-  type = list
+  type = list(string)
   default = [
             "0.0.0.0/0",
             "10.0.0.0/16",
